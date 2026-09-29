@@ -1,46 +1,41 @@
-export default function LoginPage() {
+import Link from "next/link";
+import { buttonVariants } from "@/components/ui/button";
+import ProductCard from "@/components/ProductCard";
+import { products } from "@/data/products";
+
+export default function Home() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <div className="w-full max-w-sm bg-white rounded-2xl shadow-md p-8">
-        <h1 className="text-2xl font-bold text-center text-gray-800 mb-6">
-          Sign In
-        </h1>
-
-        <form className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
-            <label htmlFor="email" className="text-sm font-medium text-gray-700">
-              Email or Username
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="text"
-              placeholder="you@example.com"
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label htmlFor="password" className="text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              placeholder="••••••••"
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition-colors"
+    <main className="min-h-screen bg-gray-50">
+      <header className="flex items-center justify-between border-b bg-white px-4 py-3 sm:px-8">
+        <h1 className="text-xl font-bold">My Shop</h1>
+        <div className="flex gap-2">
+          <Link
+            href="/login"
+            data-testid="btn-login"
+            className={buttonVariants({ variant: "outline" })}
           >
-            Log In
-          </button>
-        </form>
-      </div>
+            Login
+          </Link>
+          <Link
+            href="/register"
+            data-testid="btn-register"
+            className={buttonVariants({})}
+          >
+            Register
+          </Link>
+        </div>
+      </header>
+
+      <section className="mx-auto max-w-7xl p-4 sm:p-8">
+        <div
+          data-testid="product-list"
+          className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
+        >
+          {products.map((p) => (
+            <ProductCard key={p.id} product={p} />
+          ))}
+        </div>
+      </section>
     </main>
   );
 }
