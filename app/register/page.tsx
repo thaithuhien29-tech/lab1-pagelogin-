@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/contexts/AuthContext"; // THÊM: dùng context
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -16,15 +17,21 @@ type Errors = {
 };
 
 export default function RegisterPage() {
+  const { signUp } = useAuth(); // THÊM
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [errors, setErrors] = useState<Errors>({});
   const [success, setSuccess] = useState(false);
+  const [authError, setAuthError] = useState(""); // THÊM: lỗi từ Supabase
+  const [submitting, setSubmitting] = useState(false); // THÊM
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setAuthError("");
+    setSuccess(false);
     const err: Errors = {};
 
     if (!name.trim()) {
@@ -50,7 +57,18 @@ export default function RegisterPage() {
     }
 
     setErrors(err);
-    setSuccess(Object.keys(err).length === 0);
+    if (Object.keys(err).length > 0) return; // còn lỗi validation thì dừng
+
+    // THAY: bỏ "Registration successful (demo)", gọi Supabase thật
+    setSubmitting(true);
+    const { error } = await signUp(email.trim(), password);
+    setSubmitting(false);
+
+    if (error) {
+      setAuthError(error); // ví dụ "User already registered"
+    } else {
+      setSuccess(true);
+    }
   };
 
   return (
@@ -129,13 +147,25 @@ export default function RegisterPage() {
               )}
             </div>
 
-            <Button type="submit" className="w-full" data-testid="register-submit">
-              Register
+            <Button
+              type="submit"
+              className="w-full"
+              data-testid="register-submit"
+              disabled={submitting}
+            >
+              {submitting ? "Registering..." : "Register"}
             </Button>
+
+            {/* THÊM: lỗi trả về từ Supabase */}
+            {authError && (
+              <p data-testid="error-auth" className="text-sm text-red-600">
+                {authError}
+              </p>
+            )}
 
             {success && (
               <p data-testid="form-success" className="text-sm text-green-600">
-                Registration successful (demo)
+                Registration successful
               </p>
             )}
           </form>

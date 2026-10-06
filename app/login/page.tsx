@@ -1,21 +1,28 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/contexts/AuthContext"; // THÊM: dùng context
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function LoginPage() {
+  const router = useRouter(); // THÊM
+  const { signIn } = useAuth(); // THÊM
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
-  const [success, setSuccess] = useState(false);
+  const [authError, setAuthError] = useState(""); // THÊM: lỗi từ Supabase
+  const [submitting, setSubmitting] = useState(false); // THÊM: chặn bấm nhiều lần
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setAuthError("");
     const newErrors: { email?: string; password?: string } = {};
 
     if (!email.trim()) {
@@ -29,7 +36,18 @@ export default function LoginPage() {
     }
 
     setErrors(newErrors);
-    setSuccess(Object.keys(newErrors).length === 0);
+    if (Object.keys(newErrors).length > 0) return; // còn lỗi validation thì dừng
+
+    // THAY: bỏ "Login successful (demo)", gọi Supabase thật
+    setSubmitting(true);
+    const { error } = await signIn(email.trim(), password);
+    setSubmitting(false);
+
+    if (error) {
+      setAuthError(error); // ví dụ "Invalid login credentials"
+    } else {
+      router.push("/"); // thành công thì về trang chủ
+    }
   };
 
   return (
@@ -77,13 +95,19 @@ export default function LoginPage() {
               )}
             </div>
 
-            <Button type="submit" className="w-full" data-testid="login-submit">
-              Login
+            <Button
+              type="submit"
+              className="w-full"
+              data-testid="login-submit"
+              disabled={submitting}
+            >
+              {submitting ? "Logging in..." : "Login"}
             </Button>
 
-            {success && (
-              <p data-testid="form-success" className="text-sm text-green-600">
-                Login successful (demo)
+            {/* THÊM: lỗi trả về từ Supabase */}
+            {authError && (
+              <p data-testid="error-auth" className="text-sm text-red-600">
+                {authError}
               </p>
             )}
           </form>
