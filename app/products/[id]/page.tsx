@@ -3,6 +3,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { products } from "@/data/products";
 import FavoriteButton from "@/components/FavoriteButton";
+import { getProductReviews } from "@/lib/reviews";
+import { ReviewsProvider } from "@/contexts/ReviewsContext";
+import ReviewSection from "@/components/ReviewSection";
+
+export const dynamicParams = false;
 
 export async function generateStaticParams() {
   return products.map((product) => ({
@@ -48,9 +53,12 @@ export default async function ProductDetailPage({
     notFound();
   }
 
+  // Server-rendered reviews fetch using anon key
+  const reviewsData = await getProductReviews(numericId);
+
   return (
     <main className="min-h-screen bg-gray-50 dark:bg-zinc-950 py-10 px-4">
-      <div className="mx-auto max-w-4xl space-y-6">
+      <div className="mx-auto max-w-4xl space-y-8">
         <Link
           href="/"
           data-testid="link-back"
@@ -59,6 +67,7 @@ export default async function ProductDetailPage({
           &larr; Back to Products
         </Link>
 
+        {/* Product Details Card */}
         <div
           data-testid="product-detail"
           className="bg-white dark:bg-zinc-900 rounded-xl border p-6 sm:p-8 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-8"
@@ -107,6 +116,35 @@ export default async function ProductDetailPage({
             </div>
           </div>
         </div>
+
+        {/* Reviews Section */}
+        <section className="bg-white dark:bg-zinc-900 rounded-xl border p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b pb-6">
+            <div>
+              <h2 className="text-xl font-bold text-foreground">Customer Reviews</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Based on <span data-testid="review-count">{reviewsData.count}</span> reviews
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 bg-muted/40 px-4 py-2 rounded-lg border">
+              <span className="text-xs uppercase tracking-wide font-medium text-muted-foreground">
+                Average Rating:
+              </span>
+              <div className="flex items-center gap-1.5">
+                <span data-testid="rating-average" className="text-2xl font-bold text-foreground">
+                  {reviewsData.average}
+                </span>
+                <span className="text-amber-500 text-lg">★</span>
+              </div>
+            </div>
+          </div>
+
+          {/* ReviewsProvider only wraps the reviews part as required */}
+          <ReviewsProvider productId={product.id} initialReviews={reviewsData.reviews}>
+            <ReviewSection productId={product.id} />
+          </ReviewsProvider>
+        </section>
       </div>
     </main>
   );
